@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoSwipe - Découvrez votre prochaine voiture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4e54c8, #8f94fb);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 0;
+            background-color: #4e54c8;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-btn.active {
+            background-color: white;
+            color: #4e54c8;
+        }
+
+        .match-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .match-section.hidden {
+            display: none;
+        }
+
+        .cards-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 550px;
+            margin: 20px auto;
+        }
+
+        .car-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .car-card:active {
+            cursor: grabbing;
+        }
+
+        .car-card img {
+            width: 100%;
+            height: 60%;
+            object-fit: cover;
+        }
+
+        .car-info {
+            padding: 15px;
+            height: 40%;
+            overflow-y: auto;
+        }
+
+        .car-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .car-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .car-detail {
+            font-size: 0.8rem;
+            color: #666;
+            background-color: #f0f2f5;
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+
+        .ratings {
+            display: flex;
+            gap: 12px;
+            margin: 8px 0;
+            font-size: 0.8rem;
+        }
+
+        .rating-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .rating-label {
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        .stars {
+            display: flex;
+            gap: 1px;
+        }
+
+        .star {
+            color: #ffd700;
+            font-size: 0.85rem;
+        }
+
+        .star.empty {
+            color: #ddd;
+        }
+
+        .rating-value {
+            color: #4e54c8;
+            font-weight: bold;
+            margin-left: 4px;
+            font-size: 0.8rem;
+        }
+
+        .car-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4e54c8;
+            margin-top: 8px;
+        }
+
+        .car-location {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s;
+        }
+
+        .dislike-btn {
+            background-color: #fff;
+            color: #ff4757;
+            border: 3px solid #ff4757;
+        }
+
+        .like-btn {
+            background-color: #fff;
+            color: #2ed573;
+            border: 3px solid #2ed573;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .dislike-btn:hover {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        .like-btn:hover {
+            background-color: #2ed573;
+            color: white;
+        }
+
+        .action-btn:active {
+            transform: scale(1);
+        }
+
+        .badge {
+            position: absolute;
+            top: 30px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 3px solid;
+        }
+
+        .dislike-badge {
+            left: 20px;
+            background-color: white;
+            color: #ff4757;
+            border-color: #ff4757;
+            transform: rotate(-20deg);
+        }
+
+        .like-badge {
+            right: 20px;
+            background-color: white;
+            color: #2ed573;
+            border-color: #2ed573;
+            transform: rotate(20deg);
+        }
+
+        .no-more {
+            text-align: center;
+            padding: 50px 30px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+
+        .no-more h2 {
+            margin-bottom: 20px;
+            color: #4e54c8;
+            font-size: 1.8rem;
+        }
+
+        .no-more p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .reset-btn {
+            background-color: #4e54c8;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .reset-btn:hover {
+            background-color: #3c40a6;
+        }
+
+        .search-section {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .search-section.active {
+            display: block;
+        }
+
+        .filters {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .filters h2 {
+            color: #4e54c8;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filters input,
+        .filters select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .filters input:focus,
+        .filters select:focus {
+            outline: none;
+            border-color: #4e54c8;
+        }
+
+        .car-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .search-car-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .search-car-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-car-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .search-car-info {
+            padding: 15px;
+        }
+
+        .search-car-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .search-car-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .search-car-detail {
+            font-size: 0.85rem;
+            color: #666;
+            background-color: #f0f2f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .search-car-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4e54c8;
+            margin-top: 10px;
+        }
+
+        .search-car-location {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .no-results h3 {
+            color: #4e54c8;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .no-results p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .assistant-section {
+            display: none;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .assistant-section.active {
+            display: block;
+        }
+
+        .assistant-container {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .assistant-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .assistant-header h2 {
+            color: #4e54c8;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .assistant-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-container.hidden {
+            display: none;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4e54c8, #8f94fb);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: #f0f2f5;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            background-color: #e8eaf0;
+            border-color: #4e54c8;
+            transform: translateY(-3px);
+        }
+
+        .option-btn.selected {
+            background-color: #4e54c8;
+            color: white;
+            border-color: #4e54c8;
+        }
+
+        .option-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .navigation-btns {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .nav-quiz-btn {
+            background-color: #4e54c8;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .nav-quiz-btn:hover {
+            background-color: #3c40a6;
+        }
+
+        .nav-quiz-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.active {
+            display: block;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #4e54c8;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .results-summary {
+            background-color: #f0f2f5;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .results-summary h3 {
+            color: #4e54c8;
+            margin-bottom: 15px;
+        }
+
+        .results-summary p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+
+            .car-list {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-container {
+                height: 500px;
+            }
+
+            .options {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                gap: 10px;
+            }
+
+            .nav-btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🚗 AutoSwipe</h1>
+    </header>
+
+    <div class="nav-buttons">
+        <button id="btnMatch" class="nav-btn active">Match</button>
+        <button id="btnAssistant" class="nav-btn">Assistant</button>
+        <button id="btnSearch" class="nav-btn">Recherche</button>
+    </div>
+
+    <div id="matchSection" class="match-section">
+        <div class="cards-container" id="cardsContainer"></div>
+        <div class="actions">
+            <button class="action-btn dislike-btn" id="dislikeBtn">✕</button>
+            <button class="action-btn like-btn" id="likeBtn">♥</button>
+        </div>
+    </div>
+
+    <div id="assistantSection" class="assistant-section">
+        <div class="assistant-container">
+            <div class="assistant-header">
+                <h2>🎯 Assistant de Choix</h2>
+                <p>Répondez à quelques questions simples pour trouver votre voiture idéale</p>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div id="questionsContainer">
+                <div class="question-container" data-question="1">
+                    <div class="question">Quel est votre budget ?</div>
+                    <div class="options">
+                        <div class="option-btn" data-value="low">
+                            <div class="option-icon">💰</div>
+                            <div>Moins de 25 000€</div>
+                        </div>
+                        <div class="option-btn" data-value="medium">
+                            <div class="option-icon">💰💰</div>
+                            <div>25 000€ - 40 000€</div>
+                        </div>
+                        <div class="option-btn" data-value="high">
+                            <div class="option-icon">💰💰💰</div>
+                            <div>Plus de 40 000€</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-container hidden" data-question="2">
+                    <div class="question">Où conduirez-vous principalement ?</div>
+                    <div class="options">
+                        <div class="option-btn" data-value="city">
+                            <div class="option-icon">🏙️</div>
+                            <div>Ville</div>
+                        </div>
+                        <div class="option-btn" data-value="highway">
+                            <div class="option-icon">🛣️</div>
+                            <div>Route/Autoroute</div>
+                        </div>
+                        <div class="option-btn" data-value="mixed">
+                            <div class="option-icon">🔄</div>
+                            <div>Mixte</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-container hidden" data-question="3">
+                    <div class="question">Combien de personnes transporterez-vous ?</div>
+                    <div class="options">
+                        <div class="option-btn" data-value="1-2">
+                            <div class="option-icon">👤</div>
+                            <div>1-2 personnes</div>
+                        </div>
+                        <div class="option-btn" data-value="3-4">
+                            <div class="option-icon">👥</div>
+                            <div>3-4 personnes</div>
+                        </div>
+                        <div class="option-btn" data-value="5+">
+                            <div class="option-icon">👨‍👩‍👧‍👦</div>
+                            <div>5+ personnes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-container hidden" data-question="4">
+                    <div class="question">Quel type de carburant préférez-vous ?</div>
+                    <div class="options">
+                        <div class="option-btn" data-value="Essence">
+                            <div class="option-icon">⛽</div>
+                            <div>Essence</div>
+                        </div>
+                        <div class="option-btn" data-value="Diesel">
+                            <div class="option-icon">🚗</div>
+                            <div>Diesel</div>
+                        </div>
+                        <div class="option-btn" data-value="Électrique">
+                            <div class="option-icon">🔋</div>
+                            <div>Électrique</div>
+                        </div>
+                        <div class="option-btn" data-value="Hybride">
+                            <div class="option-icon">♻️</div>
+                            <div>Hybride</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-container hidden" data-question="5">
+                    <div class="question">Avez-vous besoin d'un grand coffre ?</div>
+                    <div class="options">
+                        <div class="option-btn" data-value="no">
+                            <div class="option-icon">👜</div>
+                            <div>Non, petit coffre suffit</div>
+                        </div>
+                        <div class="option-btn" data-value="yes">
+                            <div class="option-icon">🧳</div>
+                            <div>Oui, grand coffre nécessaire</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navigation-btns">
+                <button class="nav-quiz-btn" id="prevBtn" disabled>Précédent</button>
+                <button class="nav-quiz-btn" id="nextBtn" disabled>Suivant</button>
+            </div>
+
+            <div class="results-container" id="resultsContainer">
+                <div class="results-header">
+                    <h2>✨ Voitures recommandées pour vous</h2>
+                </div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <div class="car-list" id="recommendedCars"></div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="reset-btn" onclick="restartAssistant()">Recommencer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="searchSection" class="search-section">
+        <div class="filters">
+            <h2>Filtrer les voitures</h2>
+            <div class="filter-row">
+                <input type="text" id="filterName" placeholder="Rechercher par nom...">
+                <select id="filterFuel">
+                    <option value="">Tous les carburants</option>
+                    <option value="Électrique">Électrique</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Essence">Essence</option>
+                    <option value="Hybride">Hybride</option>
+                </select>
+                <input type="number" id="filterMinPrice" placeholder="Prix minimum (€)">
+                <input type="number" id="filterMaxPrice" placeholder="Prix maximum (€)">
+                <input type="number" id="filterYear" placeholder="Année minimum">
+            </div>
+        </div>
+        <div id="carList" class="car-list"></div>
+    </div>
+
+    <script>
+        const carsData = [
+            {id: 1, name: "Dacia Sandero", image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop", price: "14500", priceDisplay: "14 500€", year: "2022", km: "28 000", fuel: "Essence", power: "90 ch", location: "Lille", category: "citadine", passengers: "5", trunk: "small", userRating: 4.2, expertRating: 3.8},
+            {id: 2, name: "Renault Clio", image: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&h=600&fit=crop", price: "19500", priceDisplay: "19 500€", year: "2021", km: "22 000", fuel: "Essence", power: "100 ch", location: "Nice", category: "citadine", passengers: "5", trunk: "small", userRating: 4.3, expertRating: 4.0},
+            {id: 3, name: "Peugeot 208", image: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=800&h=600&fit=crop", price: "22900", priceDisplay: "22 900€", year: "2023", km: "12 000", fuel: "Essence", power: "130 ch", location: "Paris", category: "citadine", passengers: "5", trunk: "small", userRating: 4.4, expertRating: 3.9},
+            {id: 4, name: "Citroën C3", image: "https://images.unsplash.com/photo-1542362567-b07e54358753?w=800&h=600&fit=crop", price: "18900", priceDisplay: "18 900€", year: "2022", km: "25 000", fuel: "Essence", power: "83 ch", location: "Lyon", category: "citadine", passengers: "5", trunk: "small", userRating: 4.1, expertRating: 4.2},
+            {id: 5, name: "Fiat 500", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop", price: "16500", priceDisplay: "16 500€", year: "2021", km: "18 000", fuel: "Essence", power: "69 ch", location: "Marseille", category: "citadine", passengers: "4", trunk: "small", userRating: 4.5, expertRating: 3.7},
+            {id: 6, name: "Peugeot 2008", image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop", price: "25900", priceDisplay: "25 900€", year: "2022", km: "20 000", fuel: "Diesel", power: "110 ch", location: "Bordeaux", category: "suv", passengers: "5", trunk: "medium", userRating: 4.3, expertRating: 4.0},
+            {id: 7, name: "Renault Captur", image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&h=600&fit=crop", price: "24500", priceDisplay: "24 500€", year: "2023", km: "15 000", fuel: "Essence", power: "140 ch", location: "Toulouse", category: "suv", passengers: "5", trunk: "medium", userRating: 4.2, expertRating: 3.9},
+            {id: 8, name: "Dacia Duster", image: "https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=800&h=600&fit=crop", price: "19900", priceDisplay: "19 900€", year: "2022", km: "32 000", fuel: "Essence", power: "115 ch", location: "Nantes", category: "suv", passengers: "5", trunk: "large", userRating: 4.4, expertRating: 4.1},
+            {id: 9, name: "Nissan Juke", image: "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&h=600&fit=crop", price: "23500", priceDisplay: "23 500€", year: "2021", km: "28 000", fuel: "Essence", power: "114 ch", location: "Strasbourg", category: "suv", passengers: "5", trunk: "medium", userRating: 4.0, expertRating: 3.8},
+            {id: 10, name: "Volkswagen T-Roc", image: "https://images.unsplash.com/photo-1606016159991-62b4f336a79f?w=800&h=600&fit=crop", price: "28900", priceDisplay: "28 900€", year: "2022", km: "24 000", fuel: "Essence", power: "150 ch", location: "Rennes", category: "suv", passengers: "5", trunk: "medium", userRating: 4.1, expertRating: 4.0},
+            {id: 11, name: "Peugeot 3008", image: "https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=800&h=600&fit=crop", price: "32900", priceDisplay: "32 900€", year: "2023", km: "18 000", fuel: "Diesel", power: "130 ch", location: "Paris", category: "suv", passengers: "5", trunk: "large", userRating: 4.5, expertRating: 4.1},
+            {id: 12, name: "Volkswagen Tiguan", image: "https://images.unsplash.com/photo-1616422285623-13ff0162193c?w=800&h=600&fit=crop", price: "35500", priceDisplay: "35 500€", year: "2022", km: "22 000", fuel: "Diesel", power: "150 ch", location: "Lyon", category: "suv", passengers: "5", trunk: "large", userRating: 4.3, expertRating: 4.2},
+            {id: 13, name: "Hyundai Tucson", image: "https://images.unsplash.com/photo-1629897048514-3dd7414fe72a?w=800&h=600&fit=crop", price: "33500", priceDisplay: "33 500€", year: "2023", km: "16 000", fuel: "Hybride", power: "230 ch", location: "Marseille", category: "suv", passengers: "5", trunk: "large", userRating: 4.6, expertRating: 4.5},
+            {id: 14, name: "Citroën C5 Aircross", image: "https://images.unsplash.com/photo-1614200179396-2bdb77ebf81b?w=800&h=600&fit=crop", price: "31900", priceDisplay: "31 900€", year: "2022", km: "26 000", fuel: "Diesel", power: "130 ch", location: "Bordeaux", category: "suv", passengers: "5", trunk: "large", userRating: 4.2, expertRating: 3.9},
+            {id: 15, name: "Peugeot 308", image: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=800&h=600&fit=crop", price: "28300", priceDisplay: "28 300€", year: "2022", km: "18 000", fuel: "Essence", power: "130 ch", location: "Bordeaux", category: "berline", passengers: "5", trunk: "medium", userRating: 4.3, expertRating: 3.9},
+            {id: 16, name: "Renault Mégane", image: "https://images.unsplash.com/photo-1583267746897-620f29916c86?w=800&h=600&fit=crop", price: "26500", priceDisplay: "26 500€", year: "2021", km: "30 000", fuel: "Diesel", power: "115 ch", location: "Nantes", category: "berline", passengers: "5", trunk: "medium", userRating: 4.0, expertRating: 4.1},
+            {id: 17, name: "Volkswagen Golf", image: "https://images.unsplash.com/photo-1614200187524-dc4b892acf16?w=800&h=600&fit=crop", price: "29900", priceDisplay: "29 900€", year: "2022", km: "20 000", fuel: "Diesel", power: "150 ch", location: "Lille", category: "berline", passengers: "5", trunk: "medium", userRating: 4.4, expertRating: 4.3},
+            {id: 18, name: "Audi A3", image: "https://images.unsplash.com/photo-1610768764270-790fbec18178?w=800&h=600&fit=crop", price: "34900", priceDisplay: "34 900€", year: "2023", km: "12 000", fuel: "Essence", power: "150 ch", location: "Paris", category: "berline", passengers: "5", trunk: "medium", userRating: 4.5, expertRating: 4.2},
+            {id: 19, name: "Audi A4", image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800&h=600&fit=crop", price: "38900", priceDisplay: "38 900€", year: "2021", km: "30 000", fuel: "Essence", power: "204 ch", location: "Marseille", category: "berline", passengers: "5", trunk: "medium", userRating: 4.4, expertRating: 4.1},
+            {id: 20, name: "BMW Série 3", image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop", price: "42500", priceDisplay: "42 500€", year: "2022", km: "25 000", fuel: "Diesel", power: "190 ch", location: "Lyon", category: "berline", passengers: "5", trunk: "medium", userRating: 4.6, expertRating: 4.0},
+            {id: 21, name: "Mercedes Classe C", image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop", price: "45700", priceDisplay: "45 700€", year: "2023", km: "8 000", fuel: "Hybride", power: "258 ch", location: "Toulouse", category: "berline", passengers: "5", trunk: "medium", userRating: 4.5, expertRating: 4.2},
+            {id: 22, name: "BMW Série 5", image: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop", price: "52900", priceDisplay: "52 900€", year: "2023", km: "15 000", fuel: "Hybride", power: "292 ch", location: "Paris", category: "berline", passengers: "5", trunk: "large", userRating: 4.7, expertRating: 4.3},
+            {id: 23, name: "Tesla Model 3", image: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=600&fit=crop", price: "39990", priceDisplay: "39 990€", year: "2023", km: "15 000", fuel: "Électrique", power: "283 ch", location: "Paris", category: "berline", passengers: "5", trunk: "medium", userRating: 4.6, expertRating: 4.4},
+            {id: 24, name: "Renault Zoé", image: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=800&h=600&fit=crop", price: "24500", priceDisplay: "24 500€", year: "2022", km: "18 000", fuel: "Électrique", power: "135 ch", location: "Lyon", category: "citadine", passengers: "5", trunk: "small", userRating: 4.2, expertRating: 3.9},
+            {id: 25, name: "Peugeot e-208", image: "https://images.unsplash.com/photo-1617469767053-d3b523a0b982?w=800&h=600&fit=crop", price: "29900", priceDisplay: "29 900€", year: "2023", km: "10 000", fuel: "Électrique", power: "136 ch", location: "Marseille", category: "citadine", passengers: "5", trunk: "small", userRating: 4.4, expertRating: 4.0},
+            {id: 26, name: "Volkswagen ID.3", image: "https://images.unsplash.com/photo-1617469165786-8007eda3caa7?w=800&h=600&fit=crop", price: "35900", priceDisplay: "35 900€", year: "2023", km: "12 000", fuel: "Électrique", power: "204 ch", location: "Bordeaux", category: "berline", passengers: "5", trunk: "medium", userRating: 4.3, expertRating: 4.1},
+            {id: 27, name: "Toyota Yaris Hybride", image: "https://images.unsplash.com/photo-1621361365424-06f0e1eb5c49?w=800&h=600&fit=crop", price: "23900", priceDisplay: "23 900€", year: "2022", km: "22 000", fuel: "Hybride", power: "116 ch", location: "Toulouse", category: "citadine", passengers: "5", trunk: "small", userRating: 4.7, expertRating: 4.7},
+            {id: 28, name: "Toyota Corolla Hybride", image: "https://images.unsplash.com/photo-1627454820516-d0c674a7f632?w=800&h=600&fit=crop", price: "28900", priceDisplay: "28 900€", year: "2023", km: "16 000", fuel: "Hybride", power: "122 ch", location: "Nantes", category: "berline", passengers: "5", trunk: "medium", userRating: 4.8, expertRating: 4.7},
+            {id: 29, name: "Renault Clio E-Tech", image: "https://images.unsplash.com/photo-1609521263047-f8f0c7c3d4d2?w=800&h=600&fit=crop", price: "25900", priceDisplay: "25 900€", year: "2023", km: "14 000", fuel: "Hybride", power: "140 ch", location: "Lille", category: "citadine", passengers: "5", trunk: "small", userRating: 4.3, expertRating: 4.0},
+            {id: 30, name: "Kia Niro Hybride", image: "https://images.unsplash.com/photo-1622122201714-77da0ca8e5d2?w=800&h=600&fit=crop", price: "31900", priceDisplay: "31 900€", year: "2023", km: "10 000", fuel: "Hybride", power: "141 ch", location: "Strasbourg", category: "suv", passengers: "5", trunk: "large", userRating: 4.5, expertRating: 4.4}
+        ];
+
+        let currentIndex = 0, startX = 0, currentX = 0, isDragging = false, likedCars = [], dislikedCars = [];
+        let currentQuestion = 1;
+        const totalQuestions = 5;
+        const userAnswers = {};
+
+        const cardsContainer = document.getElementById('cardsContainer');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+        const likeBtn = document.getElementById('likeBtn');
+        const btnMatch = document.getElementById('btnMatch');
+        const btnAssistant = document.getElementById('btnAssistant');
+        const btnSearch = document.getElementById('btnSearch');
+        const matchSection = document.getElementById('matchSection');
+        const assistantSection = document.getElementById('assistantSection');
+        const searchSection = document.getElementById('searchSection');
+
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += i <= Math.floor(rating) || (i === Math.ceil(rating) && rating % 1 !== 0) ? '<span class="star">★</span>' : '<span class="star empty">★</span>';
+            }
+            return stars;
+        }
+
+        function createCard(car, index) {
+            const card = document.createElement('div');
+            card.className = 'car-card';
+            card.dataset.index = index;
+            card.style.zIndex = carsData.length - index;
+            if (index !== currentIndex) {
+                card.style.transform = 'scale(0.95)';
+                card.style.opacity = '0.8';
+            }
+            card.innerHTML = `
+                <img src="${car.image}" alt="${car.name}">
+                <div class="car-info">
+                    <div class="car-title">${car.name}</div>
+                    <div class="car-details">
+                        <span class="car-detail">${car.year}</span>
+                        <span class="car-detail">${car.km} km</span>
+                        <span class="car-detail">${car.fuel}</span>
+                        <span class="car-detail">${car.power}</span>
+                    </div>
+                    <div class="ratings">
+                        <div class="rating-item">
+                            <div class="rating-label">👥 Utilisateurs</div>
+                            <div>${generateStars(car.userRating)} <span class="rating-value">${car.userRating}/5</span></div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">🔧 Experts</div>
+                            <div>${generateStars(car.expertRating)} <span class="rating-value">${car.expertRating}/5</span></div>
+                        </div>
+                    </div>
+                    <div class="car-price">${car.priceDisplay}</div>
+                    <div class="car-location">📍 ${car.location}</div>
+                </div>
+                <div class="badge dislike-badge">PASSER</div>
+                <div class="badge like-badge">J'AIME</div>
+            `;
+            return card;
+        }
+
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            if (currentIndex >= carsData.length) {
+                showNoMoreCars();
+                return;
+            }
+            for (let i = currentIndex; i < Math.min(currentIndex + 2, carsData.length); i++) {
+                cardsContainer.appendChild(createCard(carsData[i], i));
+            }
+        }
+
+        function showNoMoreCars() {
+            cardsContainer.innerHTML = `
+                <div class="no-more">
+                    <h2>✨ Plus de voitures !</h2>
+                    <p>Vous avez aimé <strong>${likedCars.length}</strong> voiture(s)</p>
+                    <button class="reset-btn" onclick="resetApp()">Recommencer</button>
+                </div>
+            `;
+        }
+
+        function resetApp() {
+            currentIndex = 0;
+            likedCars = [];
+            dislikedCars = [];
+            renderCards();
+        }
+
+        function handleDragStart(e) {
+            const currentCard = cardsContainer.querySelector('.car-card:last-child');
+            if (!currentCard || currentIndex >= carsData.length) return;
+            isDragging = true;
+            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            currentCard.style.transition = 'none';
+        }
+
+        function handleDragMove(e) {
+            if (!isDragging) return;
+            const currentCard = cardsContainer.querySelector('.car-card:last-child');
+            if (!currentCard) return;
+            currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+            const deltaX = currentX - startX;
+            const rotation = deltaX * 0.1;
+            currentCard.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg)`;
+            const dislikeBadge = currentCard.querySelector('.dislike-badge');
+            const likeBadge = currentCard.querySelector('.like-badge');
+            if (deltaX < -50) {
+                dislikeBadge.style.opacity = '1';
+                likeBadge.style.opacity = '0';
+            } else if (deltaX > 50) {
+                likeBadge.style.opacity = '1';
+                dislikeBadge.style.opacity = '0';
+            } else {
+                dislikeBadge.style.opacity = '0';
+                likeBadge.style.opacity = '0';
+            }
+        }
+
+        function handleDragEnd() {
+            if (!isDragging) return;
+            const currentCard = cardsContainer.querySelector('.car-card:last-child');
+            if (!currentCard) return;
+            isDragging = false;
+            const deltaX = currentX - startX;
+            const threshold = 100;
+            currentCard.style.transition = 'transform 0.5s';
+            if (deltaX < -threshold) {
+                animateCardOut(currentCard, 'left');
+                dislikedCars.push(carsData[currentIndex]);
+                currentIndex++;
+                setTimeout(renderCards, 300);
+            } else if (deltaX > threshold) {
+                animateCardOut(currentCard, 'right');
+                likedCars.push(carsData[currentIndex]);
+                currentIndex++;
+                setTimeout(renderCards, 300);
+            } else {
+                currentCard.style.transform = '';
+                currentCard.querySelectorAll('.badge').forEach(badge => badge.style.opacity = '0');
+            }
+            startX = 0;
+            currentX = 0;
+        }
+
+        function animateCardOut(card, direction) {
+            const translateX = direction === 'left' ? -1000 : 1000;
+            const rotate = direction === 'left' ? -30 : 30;
+            card.style.transform = `translateX(${translateX}px) rotate(${rotate}deg)`;
+        }
+
+        function handleLike() {
+            if (currentIndex >= carsData.length) return;
+            const currentCard = cardsContainer.querySelector('.car-card:last-child');
+            if (currentCard) {
+                animateCardOut(currentCard, 'right');
+                likedCars.push(carsData[currentIndex]);
+                currentIndex++;
+                setTimeout(renderCards, 300);
+            }
+        }
+
+        function handleDislike() {
+            if (currentIndex >= carsData.length) return;
+            const currentCard = cardsContainer.querySelector('.car-card:last-child');
+            if (currentCard) {
+                animateCardOut(currentCard, 'left');
+                dislikedCars.push(carsData[currentIndex]);
+                currentIndex++;
+                setTimeout(renderCards, 300);
+            }
+        }
+
+        function showMatchSection() {
+            matchSection.classList.remove('hidden');
+            assistantSection.classList.remove('active');
+            searchSection.classList.remove('active');
+            btnMatch.classList.add('active');
+            btnAssistant.classList.remove('active');
+            btnSearch.classList.remove('active');
+        }
+
+        function showAssistantSection() {
+            matchSection.classList.add('hidden');
+            assistantSection.classList.add('active');
+            searchSection.classList.remove('active');
+            btnMatch.classList.remove('active');
+            btnAssistant.classList.add('active');
+            btnSearch.classList.remove('active');
+        }
+
+        function showSearchSection() {
+            matchSection.classList.add('hidden');
+            assistantSection.classList.remove('active');
+            searchSection.classList.add('active');
+            btnMatch.classList.remove('active');
+            btnAssistant.classList.remove('active');
+            btnSearch.classList.add('active');
+        }
+
+        function displayCars(cars) {
+            const carList = document.getElementById('carList');
+            carList.innerHTML = '';
+            if (cars.length === 0) {
+                carList.innerHTML = `<div class="no-results"><h3>Aucun résultat</h3><p>Essayez de modifier vos filtres de recherche</p></div>`;
+                return;
+            }
+            cars.forEach(car => {
+                const card = document.createElement('div');
+                card.className = 'search-car-card';
+                card.innerHTML = `
+                    <img src="${car.image}" alt="${car.name}">
+                    <div class="search-car-info">
+                        <div class="search-car-title">${car.name}</div>
+                        <div class="search-car-details">
+                            <span class="search-car-detail">${car.year}</span>
+                            <span class="search-car-detail">${car.km} km</span>
+                            <span class="search-car-detail">${car.fuel}</span>
+                            <span class="search-car-detail">${car.power}</span>
+                        </div>
+                        <div class="ratings">
+                            <div class="rating-item">
+                                <div class="rating-label">👥 ${car.userRating}/5</div>
+                                <div class="stars">${generateStars(car.userRating)}</div>
+                            </div>
+                            <div class="rating-item">
+                                <div class="rating-label">🔧 ${car.expertRating}/5</div>
+                                <div class="stars">${generateStars(car.expertRating)}</div>
+                            </div>
+                        </div>
+                        <div class="search-car-price">${car.priceDisplay}</div>
+                        <div class="search-car-location">📍 ${car.location}</div>
+                    </div>
+                `;
+                carList.appendChild(card);
+            });
+        }
+
+        function filterCars() {
+            const name = document.getElementById('filterName').value.toLowerCase();
+            const fuel = document.getElementById('filterFuel').value;
+            const minPrice = parseInt(document.getElementById('filterMinPrice').value) || 0;
+            const maxPrice = parseInt(document.getElementById('filterMaxPrice').value) || Infinity;
+            const year = parseInt(document.getElementById('filterYear').value) || 0;
+            const filtered = carsData.filter(car => {
+                return (!name || car.name.toLowerCase().includes(name)) &&
+                       (!fuel || car.fuel === fuel) &&
+                       parseInt(car.price) >= minPrice &&
+                       parseInt(car.price) <= maxPrice &&
+                       parseInt(car.year) >= year;
+            });
+            displayCars(filtered);
+        }
+
+        function setupAssistant() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const container = this.closest('.question-container');
+                    const questionNum = container.dataset.question;
+                    container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    userAnswers[questionNum] = this.dataset.value;
+                    nextBtn.disabled = false;
+                });
+            });
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestion > 1) {
+                    currentQuestion--;
+                    updateQuestionDisplay();
+                }
+            });
+            nextBtn.addEventListener('click', () => {
+                if (currentQuestion < totalQuestions) {
+                    currentQuestion++;
+                    updateQuestionDisplay();
+                } else {
+                    showResults();
+                }
+            });
+        }
+
+        function updateQuestionDisplay() {
+            document.querySelectorAll('.question-container').forEach(q => q.classList.add('hidden'));
+            document.querySelector(`.question-container[data-question="${currentQuestion}"]`).classList.remove('hidden');
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            prevBtn.disabled = currentQuestion === 1;
+            nextBtn.disabled = !userAnswers[currentQuestion];
+            nextBtn.textContent = currentQuestion === totalQuestions ? 'Voir les résultats' : 'Suivant';
+        }
+
+        function showResults() {
+            document.getElementById('questionsContainer').style.display = 'none';
+            document.querySelector('.navigation-btns').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            document.getElementById('resultsContainer').classList.add('active');
+            const summary = document.getElementById('resultsSummary');
+            summary.innerHTML = `
+                <h3>📋 Vos critères</h3>
+                <p><strong>Budget :</strong> ${getBudgetText(userAnswers['1'])}</p>
+                <p><strong>Usage :</strong> ${getUsageText(userAnswers['2'])}</p>
+                <p><strong>Passagers :</strong> ${userAnswers['3'] === '1-2' ? '1-2 personnes' : userAnswers['3'] === '3-4' ? '3-4 personnes' : '5+ personnes'}</p>
+                <p><strong>Carburant :</strong> ${userAnswers['4']}</p>
+                <p><strong>Coffre :</strong> ${userAnswers['5'] === 'yes' ? 'Grand coffre nécessaire' : 'Petit coffre suffit'}</p>
+            `;
+            displayRecommendedCars(getRecommendedCars());
+        }
+
+        function getBudgetText(value) {
+            if (value === 'low') return 'Moins de 25 000€';
+            if (value === 'medium') return '25 000€ - 40 000€';
+            return 'Plus de 40 000€';
+        }
+
+        function getUsageText(value) {
+            if (value === 'city') return 'Principalement en ville';
+            if (value === 'highway') return 'Route/Autoroute';
+            return 'Usage mixte';
+        }
+
+        function getRecommendedCars() {
+            return carsData.filter(car => {
+                const price = parseInt(car.price);
+                const budget = userAnswers['1'];
+                const fuel = userAnswers['4'];
+                let budgetMatch = false;
+                if (budget === 'low') budgetMatch = price < 25000;
+                else if (budget === 'medium') budgetMatch = price >= 25000 && price <= 40000;
+                else budgetMatch = price > 40000;
+                return budgetMatch && car.fuel === fuel;
+            });
+        }
+
+        function displayRecommendedCars(cars) {
+            const container = document.getElementById('recommendedCars');
+            container.innerHTML = '';
+            if (cars.length === 0) {
+                container.innerHTML = `<div class="no-results"><h3>Aucune voiture ne correspond exactement</h3><p>Essayez de modifier vos critères ou consultez la page Recherche pour plus d'options</p></div>`;
+                return;
+            }
+            cars.forEach(car => {
+                const card = document.createElement('div');
+                card.className = 'search-car-card';
+                card.innerHTML = `
+                    <img src="${car.image}" alt="${car.name}">
+                    <div class="search-car-info">
+                        <div class="search-car-title">${car.name}</div>
+                        <div class="search-car-details">
+                            <span class="search-car-detail">${car.year}</span>
+                            <span class="search-car-detail">${car.km} km</span>
+                            <span class="search-car-detail">${car.fuel}</span>
+                            <span class="search-car-detail">${car.power}</span>
+                        </div>
+                        <div class="ratings">
+                            <div class="rating-item">
+                                <div class="rating-label">👥 ${car.userRating}/5</div>
+                                <div class="stars">${generateStars(car.userRating)}</div>
+                            </div>
+                            <div class="rating-item">
+                                <div class="rating-label">🔧 ${car.expertRating}/5</div>
+                                <div class="stars">${generateStars(car.expertRating)}</div>
+                            </div>
+                        </div>
+                        <div class="search-car-price">${car.priceDisplay}</div>
+                        <div class="search-car-location">📍 ${car.location}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function restartAssistant() {
+            currentQuestion = 1;
+            Object.keys(userAnswers).forEach(key => delete userAnswers[key]);
+            document.getElementById('questionsContainer').style.display = 'block';
+            document.querySelector('.navigation-btns').style.display = 'flex';
+            document.querySelector('.progress-bar').style.display = 'block';
+            document.getElementById('resultsContainer').classList.remove('active');
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            updateQuestionDisplay();
+        }
+
+        function init() {
+            renderCards();
+            btnMatch.addEventListener('click', showMatchSection);
+            btnAssistant.addEventListener('click', showAssistantSection);
+            btnSearch.addEventListener('click', showSearchSection);
+            dislikeBtn.addEventListener('click', handleDislike);
+            likeBtn.addEventListener('click', handleLike);
+            cardsContainer.addEventListener('mousedown', handleDragStart);
+            cardsContainer.addEventListener('mousemove', handleDragMove);
+            cardsContainer.addEventListener('mouseup', handleDragEnd);
+            cardsContainer.addEventListener('mouseleave', handleDragEnd);
+            cardsContainer.addEventListener('touchstart', handleDragStart);
+            cardsContainer.addEventListener('touchmove', handleDragMove);
+            cardsContainer.addEventListener('touchend', handleDragEnd);
+            document.getElementById('filterName').addEventListener('input', filterCars);
+            document.getElementById('filterFuel').addEventListener('change', filterCars);
+            document.getElementById('filterMinPrice').addEventListener('input', filterCars);
+            document.getElementById('filterMaxPrice').addEventListener('input', filterCars);
+            document.getElementById('filterYear').addEventListener('input', filterCars);
+            displayCars(carsData);
+            setupAssistant();
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
